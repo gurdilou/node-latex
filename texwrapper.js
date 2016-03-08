@@ -78,10 +78,19 @@ function handleErrors(log_file, cb) {
     var err = [];
     log.on("data", function(data) {
       var lines = data.toString().split("\n");
+      var detailsToInclude = 0;
+
       for(var i=0; i<lines.length; ++i) {
         var l = lines[i];
         if(l.length > 0 && l.charAt(0) === "!") {
-          err.push(lines[i]);
+          //Adding error
+          err.push(l);
+          detailsToInclude=2;
+        }else{
+          if(detailsToInclude > 0){
+            err.push(l);
+            detailsToInclude--;
+          }
         }
       }
     });
@@ -109,13 +118,15 @@ function compileSource(config, cb){
   //Verif de l'entrée
   fs.stat(config.input_path, function(err, stats){
     if(err){
-      console.log("file not exists");
+      // console.log("file not exists : "+config.input_path);
       cb("", err);
+      return;
     }
 
     _requestTempDirectory(function(err, dirPath){
       if(err){
         cb("", err);
+        return;
       }
       var basedir = path.dirname(config.input_path);
       var basename = path.basename(config.input_path);
@@ -130,14 +141,16 @@ function compileSource(config, cb){
       // console.log("outDir : "+outDir);
       // console.log("output_file : "+output_file);
       // console.log("log_file : "+log_file);
-      // var command = config.tex_command+" -interaction nonstopmode -output-directory "+outDir+" "+config.input_path;
-      // console.log("command : "+command
+      // var command = config.tex_command+" -interaction nonstopmode -halt-on-error -output-directory /tmp/latex "+basename;
+      // console.log("command : "+command);
+
       var tex = spawn(config.tex_command, [
         "-interaction=nonstopmode",
         "-output-directory="+outDir,
-        config.input_path
+        "-halt-on-error",
+        basename
       ], {
-        cwd: '.',
+        cwd: basedir,
         env: process.env
       });
 
@@ -169,13 +182,19 @@ function _onCompilationEnd(config, output_file, log_file, basedir, basenameClean
       }
 
       // console.log("copy "+output_file+" vers "+destFile);
-      fse.copy(output_file, destFile, function (err) {
-        if(err){
-          cb("", err);
-        } else{
-          cb(output_file, undefined);
-        }
-      });
+      // We get back the file only something say we want it
+      if( config.isFileInput || (config.out_directory !== "")){
+        fse.copy(output_file, destFile, function (err) {
+          if(err){
+            cb("", err);
+            return;
+          } else{
+            cb(output_file);
+          }
+        });
+      }else{
+        cb(output_file);
+      }
     } else {
       handleErrors(log_file, function(err){
         cb("", err);
@@ -211,6 +230,7 @@ function _createSourceInput(config, doc, cb) {
   _requestTempDirectory(function(err, dirPath) {
     if(err) {
       cb(err);
+      return;
     }
     //Write data to tex file
     config.input_path = path.join(dirPath, "texput.tex");
@@ -260,23 +280,21 @@ exports.latex = function(doc, options, callback) {
   var compile = function (){
 
     compileSource(config, function(output_path, err){
-      if(config.pipe_in_stream){
+      if(callback){
+        callback(err);
+      }else if(config.pipe_in_stream){
         if(err){
-          console.log(err);
+          // console.log(err);
           result.emit("error", err);
           result.destroySoon();
         }else{
           var stream = fs.createReadStream(output_path);
           stream.pipe(result);
         }
+      }else if(err){
+        throw err;
       }
-      if(callback){
-        callback(err);
-      }else{
-        if(err){
-          throw err;
-        }
-      }
+
     });
   };
 
@@ -284,6 +302,7 @@ exports.latex = function(doc, options, callback) {
     _createSourceInput(config, doc, function(err){
       if (err){
         error(new Error("Invalid document"));
+        return;
       }else{
         compile();
       }
