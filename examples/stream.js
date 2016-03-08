@@ -1,3 +1,7 @@
-//One liner application of node-latex showing how to make tex work with streams
-require("../texwrapper.js")(process.stdin).pipe(process.stdout);
 
+//Simple example
+var latex = require('../texwrapper').latex;
+var fs = require('fs');
+
+var fileStrm = fs.createReadStream("./testdoc.tex");
+latex(fileStrm).pipe(process.stdout);

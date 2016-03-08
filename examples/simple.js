@@ -1,9 +1,10 @@
 
 //Simple example
-var dvistream = require("../texwrapper.js")([
+
+var latex = require('../texwrapper').latex;
+latex([
   "\\documentclass{article}",
   "\\begin{document}",
   "abc",
   "\\end{document}"
-]);
-dvistream.pipe(process.stdout);
+]).pipe(process.stdout);

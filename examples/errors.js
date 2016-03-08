@@ -1,1 +1,4 @@
-require("../texwrapper.js")("asdhfaksdhf").pipe(process.stdout);
+
+//Simple example
+var latex = require('../texwrapper').latex;
+latex("asdhfaksdhf").pipe(process.stdout);
