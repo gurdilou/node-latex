@@ -1,6 +1,6 @@
 {
   "name": "latex-file",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A fork from 'latex' package - 'A simple wrapper for LaTeX in node.js'",
   "main": "texwrapper.js",
   "directories": {
