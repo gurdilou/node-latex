@@ -28,7 +28,6 @@ function _createTempDirectory(cb){
         fse.removeSync(dirPath);
       });
     }
-    // console.log("dir created : "+dirPath);
 
     dirTmp.directory_err = err;
     dirTmp.directory_path = dirPath;
@@ -42,9 +41,9 @@ function _createTempDirectory(cb){
 }
 
 //Waits for directory to be built
-function awaitDir(dirTmp, cb) {
+function _awaitDir(dirTmp, cb) {
 
-  function makeLocalDir(dirTmp) {
+  function _makeLocalDir(dirTmp) {
     if(dirTmp.directory_err) {
       cb(dirTmp.directory_err, null);
       return;
@@ -60,14 +59,14 @@ function awaitDir(dirTmp, cb) {
   }
 
   if(dirTmp.directory_built) {
-    makeLocalDir(dirTmp);
+    _makeLocalDir(dirTmp);
   } else {
-    dirTmp.directory_wait.push(makeLocalDir);
+    dirTmp.directory_wait.push(_makeLocalDir);
   }
 }
 
 //Send errors downstream to result
-function handleErrors(log_file, cb) {
+function _handleErrors(log_file, cb) {
   fs.exists(log_file, function(exists) {
     if(!exists) {
       cb(new Error("Error opening log file"));
@@ -107,18 +106,17 @@ function handleErrors(log_file, cb) {
 
 function _requestTempDirectory(cb){
   _createTempDirectory(function(dirTmp){
-    awaitDir(dirTmp, function(err, dirPath) {
+    _awaitDir(dirTmp, function(err, dirPath) {
       cb(err, dirPath);
     });
   });
 }
 
 // Compile a latex source file
-function compileSource(config, cb){
+function _compileSource(config, cb){
   //Verif de l'entrée
   fs.stat(config.input_path, function(err, stats){
     if(err){
-      // console.log("file not exists : "+config.input_path);
       cb("", err);
       return;
     }
@@ -138,12 +136,6 @@ function compileSource(config, cb){
 
 
       //Invoke LaTeX
-      // console.log("outDir : "+outDir);
-      // console.log("output_file : "+output_file);
-      // console.log("log_file : "+log_file);
-      // var command = config.tex_command+" -interaction nonstopmode -halt-on-error -output-directory /tmp/latex "+basename;
-      // console.log("command : "+command);
-
       var tex = spawn(config.tex_command, [
         "-interaction=nonstopmode",
         "-output-directory="+outDir,
@@ -181,7 +173,6 @@ function _onCompilationEnd(config, output_file, log_file, basedir, basenameClean
         destFile = config.out_directory+"/"+basenameClean+".pdf";
       }
 
-      // console.log("copy "+output_file+" vers "+destFile);
       // We get back the file only something say we want it
       if( config.isFileInput || (config.out_directory !== "")){
         fse.copy(output_file, destFile, function (err) {
@@ -196,7 +187,7 @@ function _onCompilationEnd(config, output_file, log_file, basedir, basenameClean
         cb(output_file);
       }
     } else {
-      handleErrors(log_file, function(err){
+      _handleErrors(log_file, function(err){
         cb("", err);
       });
     }
@@ -224,7 +215,6 @@ function _createConfigFrom(options) {
 }
 
 function _createSourceInput(config, doc, cb) {
-  // console.log("_createSourceInput");
   config.pipe_in_stream = 1;
   //create temp directory
   _requestTempDirectory(function(err, dirPath) {
@@ -279,12 +269,11 @@ exports.latex = function(doc, options, callback) {
   var result = through();
   var compile = function (){
 
-    compileSource(config, function(output_path, err){
+    _compileSource(config, function(output_path, err){
       if(callback){
         callback(err);
       }else if(config.pipe_in_stream){
         if(err){
-          // console.log(err);
           result.emit("error", err);
           result.destroySoon();
         }else{

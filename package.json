@@ -1,5 +1,5 @@
 {
-  "name": "latex-local",
+  "name": "latex-file",
   "version": "0.0.2",
   "description": "A fork from 'latex' package - 'A simple wrapper for LaTeX in node.js'",
   "main": "texwrapper.js",

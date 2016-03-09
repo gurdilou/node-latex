@@ -1,7 +1,7 @@
 latex
 ==========
 
-Simple LaTeX wrapper for node.js
+Simple LaTeX wrapper for node.js. Accepts LaTeX raw inputs, or filepaths.
 
 ### Installation ###
 
