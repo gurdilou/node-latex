@@ -17,7 +17,7 @@ For Windows, you can try using cygwin though I have not tested this.
 
 Once you have a working version of latex, you can install node-latex using the following command:
 
-    npm install latex
+    npm install latex-file
 
 ### Usage ###
 
